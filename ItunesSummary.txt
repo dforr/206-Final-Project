@@ -1,0 +1,6 @@
+Average duration for a Taylor Swift song is: 3.94 minutes
+Average duration for a Drake song is: 4.0 minutes
+Average duration for a Justin Bieber song is: 3.9 minutes
+Average duration for a One Direction song is: 3.8 minutes
+Average duration for a Frank Ocean song is: 3.82 minutes
+Average duration for a Ariana Grande song is: 3.8 minutes
