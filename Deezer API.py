@@ -6,12 +6,12 @@ import os
 import matplotlib 
 import matplotlib.pyplot as plt 
 
-url = "https://api.deezer.com/playlist/3185085222"
+url = "https://api.deezer.com/playlist/" 
 headers = {    
     'x-rapidapi-key': "e8987c562amsh78b1a8d73318a6fp16a5aajsn465e38986a0e",    
     'x-rapidapi-host': "deezerdevs-deezer.p.rapidapi.com"    
     }
-response = requests.get(url, headers = headers)      
+response = requests.get(url, headers = headers, id = id)    
 
 # Create Database
 def setUpDatabase(db_name):
@@ -62,175 +62,18 @@ def music(cur, conn):
     #counter = 0
     f = open("DeezerSummary.txt", 'w')
     f.write("Average duration for a song in the Global 2020 playlist is:" + str(avg_min) + " minutes" + "\n")
+    f.write("Average duration for a song in the Hip-Hop Hits playlist is:" + str(avg_min) + " minutes" + "\n")
+    f.write("Average duration for a song in the Rap Bangers playlist is:" + str(avg_min) + " minutes" + "\n")
+    f.write("Average duration for a song in the Best of Hip-Hop 2020 playlist is:" + str(avg_min) + " minutes" + "\n")
     f.close()
     print(avg_min)
 cur,conn = setUpDatabase('fifth.sqlite')
 music(cur, conn)
+music("Global 2020", 3185085222)
+music("Hip-Hop Hits", 1677006641)
+music("Rap Bangers", 1996494362)
+music("Best of Hip-Hop 2020", 5171651864)
 
-#Information for Hip-Hop Hits Playlist
-url = "https://api.deezer.com/playlist/1677006641"
-headers = {    
-    'x-rapidapi-key': "e8987c562amsh78b1a8d73318a6fp16a5aajsn465e38986a0e",    
-    'x-rapidapi-host': "deezerdevs-deezer.p.rapidapi.com"    
-    }
-response = requests.get(url, headers = headers)      
-
-def music(cur, conn):
-    cur.execute("CREATE TABLE IF NOT EXISTS DeezerData(id TEXT, artistName TEXT, ranking FLOAT, trackTimeMillis FLOAT)")
-    print(response.json())
-    text = json.loads(response.text) 
-    tracks = text.get('tracks')
-    data = tracks.get('data')
-    cur.execute('SELECT id FROM DeezerData')
-    id_list = cur.fetchall() #selecting all id from table, and saving them to a list
-    index = len(id_list) #first thing in the id_list is 0, but the second time you'd run thru is 25
-    count = 0 #limiting to 25 
-    for info in data: 
-        if count < 25:
-            id_num = info['id']
-            if id_num not in id_list: #if id num is already in the id list, it would loop through again and wouldn't add the count
-                name = info['artist']['name']
-                rank = info['rank']
-                duration = info['duration']
-                cur.execute('INSERT INTO DeezerData(id, artistName, ranking, trackTimeMillis) VALUES (?,?,?,?)', (id_num, name, rank, duration))
-                count += 1
-        print(id_num)
-        print(name)
-        print(rank)
-        print(duration)
-    conn.commit()
-
-#Calculating the average time of song in playlist  
-    cur.execute("SELECT trackTimeMillis from DeezerData")
-    total = 0
-    avg_length = 0
-    count = 0
-    for row in cur:
-        time = row[-1] #change row, index at a different
-        print(time) 
-        total += time
-        count += 1
-    avg_milli = total/count
-    avg = avg_milli / 60
-    avg_min = round(avg, 2)
-    conn = sqlite3.connect('DeezerCalculations.sqlite')
-    #counter = 0
-    f = open("DeezerSummary.txt", 'w')
-    f.write("Average duration for a song in the Hip-Hop playlist is:" + str(avg_min) + " minutes" + "\n")
-    f.close()
-    print(avg_min)
-cur,conn = setUpDatabase('fifth.sqlite')
-music(cur, conn)
-
-#Rap Bangers Playlist------------------------------------------------------------------------------------------------------------------------
-url = "https://api.deezer.com/playlist/1996494362"
-headers = {    
-    'x-rapidapi-key': "e8987c562amsh78b1a8d73318a6fp16a5aajsn465e38986a0e",    
-    'x-rapidapi-host': "deezerdevs-deezer.p.rapidapi.com"    
-    }
-response = requests.get(url, headers = headers)      
-
-def music(cur, conn):
-    cur.execute("CREATE TABLE IF NOT EXISTS DeezerData(id TEXT, artistName TEXT, ranking FLOAT, trackTimeMillis FLOAT)")
-    print(response.json())
-    text = json.loads(response.text) 
-    tracks = text.get('tracks')
-    data = tracks.get('data')
-    cur.execute('SELECT id FROM DeezerData')
-    id_list = cur.fetchall() #selecting all id from table, and saving them to a list
-    index = len(id_list) #first thing in the id_list is 0, but the second time you'd run thru is 25
-    count = 0 #limiting to 25 
-    for info in data: 
-        if count < 25:
-            id_num = info['id']
-            if id_num not in id_list: #if id num is already in the id list, it would loop through again and wouldn't add the count
-                name = info['artist']['name']
-                rank = info['rank']
-                duration = info['duration']
-                cur.execute('INSERT INTO DeezerData(id, artistName, ranking, trackTimeMillis) VALUES (?,?,?,?)', (id_num, name, rank, duration))
-                count += 1
-        print(id_num)
-        print(name)
-        print(rank)
-        print(duration)
-    conn.commit()
-
-#Calculating the average time of song in playlist  
-    cur.execute("SELECT trackTimeMillis from DeezerData")
-    total = 0
-    avg_length = 0
-    count = 0
-    for row in cur:
-        time = row[-1] #change row, index at a different
-        print(time) 
-        total += time
-        count += 1
-    avg_milli = total/count
-    avg = avg_milli / 60
-    avg_min = round(avg, 2)
-    conn = sqlite3.connect('DeezerCalculations.sqlite')
-    #counter = 0
-    f = open("DeezerSummary.txt", 'w')
-    f.write("Average duration for a song in the Rap Banger playlist is:" + str(avg_min) + " minutes" + "\n")
-    f.close()
-    print(avg_min)
-cur,conn = setUpDatabase('fifth.sqlite')
-music(cur, conn)
-
-#Best of Hip-Hop 2020 
-url = "https://api.deezer.com/playlist/5171651864"
-headers = {    
-    'x-rapidapi-key': "e8987c562amsh78b1a8d73318a6fp16a5aajsn465e38986a0e",    
-    'x-rapidapi-host': "deezerdevs-deezer.p.rapidapi.com"    
-    }
-response = requests.get(url, headers = headers)      
-
-def music(cur, conn):
-    cur.execute("CREATE TABLE IF NOT EXISTS DeezerData(id TEXT, artistName TEXT, ranking FLOAT, trackTimeMillis FLOAT)")
-    print(response.json())
-    text = json.loads(response.text) 
-    tracks = text.get('tracks')
-    data = tracks.get('data')
-    cur.execute('SELECT id FROM DeezerData')
-    id_list = cur.fetchall() #selecting all id from table, and saving them to a list
-    index = len(id_list) #first thing in the id_list is 0, but the second time you'd run thru is 25
-    count = 0 #limiting to 25 
-    for info in data: 
-        if count < 25:
-            id_num = info['id']
-            if id_num not in id_list: #if id num is already in the id list, it would loop through again and wouldn't add the count
-                name = info['artist']['name']
-                rank = info['rank']
-                duration = info['duration']
-                cur.execute('INSERT INTO DeezerData(id, artistName, ranking, trackTimeMillis) VALUES (?,?,?,?)', (id_num, name, rank, duration))
-                count += 1
-        print(id_num)
-        print(name)
-        print(rank)
-        print(duration)
-    conn.commit()
-
-#Calculating the average time of song in playlist  
-    cur.execute("SELECT trackTimeMillis from DeezerData")
-    total = 0
-    avg_length = 0
-    count = 0
-    for row in cur:
-        time = row[-1] #change row, index at a different
-        print(time) 
-        total += time
-        count += 1
-    avg_milli = total/count
-    avg = avg_milli / 60
-    avg_min = round(avg, 2)
-    conn = sqlite3.connect('DeezerCalculations.sqlite')
-    #counter = 0
-    f = open("DeezerSummary.txt", 'w')
-    f.write("Average duration for a song in the Best of Rap 2020 playlist is:" + str(avg_min) + " minutes" + "\n")
-    f.close()
-    print(avg_min)
-cur,conn = setUpDatabase('fifth.sqlite')
-music(cur, conn)
 
 def createvisual():
     conn = sqlite3.connect("DeezerCalculations.sqlite")
