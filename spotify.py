@@ -4,10 +4,10 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 import json
 import spotipy.util as util
-import pandas as pd
-from pandas.io import sql
 import sqlite3
 from sqlite3 import Error
+import matplotlib
+import matplotlib.pyplot as plt
 
 Spotify = spotipy.Spotify
 
@@ -68,29 +68,64 @@ def transfer_to_database(playID, owner, db, table, sql_value):
                                    popularity, 
                                    duration, 
                                    artist_name, 
-                                   album_name, 
-                                   ):
+                                   album_name):
         values = (iD, name, pop, dur, an, alb)
         table_values(conn, sql_value, values)
         conn.commit()
 
-#def Q(input_string, db = conn):
-    #return pd.read_sql(input_string, db)
+results = spo.search("TOP 100 Songs of 2020 (Best Hit Music Playlist)", limit = 1, type='playlist')
+playID =  results['playlists']['items'][0]['id']
+owner = results['playlists']['items'][0]['owner']['id']
+db = 'spotify_database.sqlite'
+table = 'CREATE TABLE IF NOT EXISTS tracks(track_id CHAR(20) PRIMARY KEY, name TEXT, popularity INTEGER, duration_ms INTEGER, artist_name TEXT, album TEXT);'
+sql_value = 'INSERT INTO tracks VALUES (?,?,?,?,?,?)'
+transfer_to_database(playID, owner, db, table, sql_value)
 
-def main():
-    results = spo.search("TOP 100 Songs of 2020 (Best Hit Music Playlist)", limit = 1, type='playlist')
-    playID =  results['playlists']['items'][0]['id']
-    owner = results['playlists']['items'][0]['owner']['id']
-    db = 'dbspo.sqlite'
-    #conn = sqlite3.connect(db)
-    table = 'CREATE TABLE IF NOT EXISTS tracks(track_id CHAR(20) PRIMARY KEY, name TEXT, popularity INTEGER, duration_ms INTEGER, artist_name TEXT, album TEXT);'
-    sql_value = 'INSERT INTO tracks VALUES (?,?,?,?,?,?)'
-    transfer_to_database(playID, owner, db, table, sql_value)
 
-    #Q('SELECT COUNT(*) FROM tracks')
-   
 
+conn = sqlite3.connect(db)
+cur= conn.cursor()
+
+cur.execute("SELECT name, duration_ms from tracks")
+total = 0
+avg_length = 0
+count = 0
+for row in cur:
+    time = row[-1]
+    if time < 600000:
+        total += time
+        count += 1
+avg_milli = total/count
+avg = avg_milli / 60000
+avg_min = round(avg, 2)
+conn = sqlite3.connect('SpotifyCalculations.sqlite')
+cur = conn.cursor()
+cur.execute('CREATE TABLE IF NOT EXISTS PythonCalc(name TEXT, avg_min FLOAT)')
+cur.execute('INSERT INTO PythonCalc(name, avg_min) VALUES (?,?)', ("TOP 100 Songs of 2020",avg_min,))
+conn.commit()
+
+cur.execute('SELECT * FROM PythonCalc')
+counter = 0
+f = open("PythonSummary.txt", 'w')
+for row in cur:
+    counter += 1
+    f.write("The average duration for songs in " + str(row[0]) + " is: " + str(row[1]) + " minutes" + "\n")
+f.close()
+
+
+def createvisual():
+    conn = sqlite3.connect(db) 
+    cur = conn.cursor()
+    dur = []
+    cur.execute("SELECT * from tracks")
+    for row in cur:
+        dur.append(float(row[3]))
     
+    x = range(100)
+    plt.scatter(x, dur, color='#0000ff', alpha=0.5)
+    plt.title('Scatter Plot for Top 100 Duration')
+    plt.xlabel('Top 100 song placement')
+    plt.ylabel('Duration (ms)')
+    plt.show()
 
-if __name__ == '__main__':
-    main()
+createvisual()
