@@ -22,7 +22,7 @@ def music(cur, conn, Pname, playlist):
     'x-rapidapi-host': "deezerdevs-deezer.p.rapidapi.com"    
     }
     response = requests.get(url, headers = headers)    
-    cur.execute("CREATE TABLE IF NOT EXISTS DeezerData(id TEXT, artistName TEXT, ranking FLOAT, trackTimeMillis FLOAT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS DeezerData(id TEXT, artistName TEXT, ranking FLOAT, trackTimeMillis FLOAT, title TEXT)")
     text = json.loads(response.text) 
     tracks = text.get('tracks')
     data = tracks.get('data')
@@ -37,8 +37,9 @@ def music(cur, conn, Pname, playlist):
                 name = info['artist']['name']
                 rank = info['rank']
                 duration = info['duration']
+                title = info["title_short"]
                 #playlist = 
-                cur.execute('INSERT INTO DeezerData(id, artistName, ranking, trackTimeMillis) VALUES (?,?,?,?)', (id_num, name, rank, duration))
+                cur.execute('INSERT INTO DeezerData(id, artistName, ranking, trackTimeMillis, title) VALUES (?,?,?,?,?)', (id_num, name, rank, duration, title))
                 count += 1
     conn.commit()
 
@@ -76,26 +77,28 @@ def music(cur, conn, Pname, playlist):
 
 
 def createvisual():
-    conn = sqlite3.connect("testtest.sqlite")
+    conn = sqlite3.connect("DeezerDB.sqlite")
     cur = conn.cursor()
     durations = []
-    cur.execute("SELECT trackTimeMillis from DeezerData")
+    titles = []
+    cur.execute("SELECT trackTimeMillis, title from DeezerData")
     for row in cur: 
-        print(row[0])
-        durations.append(float(row[0]))
-    plt.figure(1, figsize = (8.5,11))
-    xbar = ["song1", "song2", "song3", "song4", "song5", "song6"]
-    ybar = [durations[0], durations[1], durations[2], durations[3], durations[4], durations[5]]
-    plt.bar(xbar,ybar, align = "center", color = "blue")
-    plt.title("Average Length of Song by Popular")
-    plt.xlabel("Artist")
+        durations.append(float(row[0])/60)
+        titles.append(row[1])
+    plt.figure(1, figsize = (11,11))
+    xbar = titles
+    ybar = durations
+    plt.bar(xbar,ybar, width =.8, align = "center", color = "blue")
+    plt.title("Durations of Songs from Global 2020 Hits Playlist")
+    plt.xlabel("Song Title")
     plt.ylabel("Duration (Min)")
     plt.ylim(2,5)
+    plt.tick_params(axis='x', rotation=70)
     plt.savefig("DeezerBargraph.png")
     plt.show()
 
 def main():
-    cur,conn = setUpDatabase('testtest.sqlite')
+    cur,conn = setUpDatabase('DeezerDB.sqlite')
     music(cur, conn,"Global 2020", 3185085222)
     test = createvisual()
 
