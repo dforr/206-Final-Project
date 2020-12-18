@@ -82,10 +82,14 @@ def createvisual():
     durations = []
     titles = []
     cur.execute("SELECT trackTimeMillis, title from DeezerData")
+    count = 0
     for row in cur: 
         durations.append(float(row[0])/60)
         titles.append(row[1])
-    plt.figure(1, figsize = (11,11))
+        count += 1
+        if count == 30:
+            break
+    plt.figure(1, figsize = (30,11))
     xbar = titles
     ybar = durations
     plt.bar(xbar,ybar, width =.8, align = "center", color = "blue")
@@ -100,6 +104,7 @@ def createvisual():
 def main():
     cur,conn = setUpDatabase('DeezerDB.sqlite')
     music(cur, conn,"Global 2020", 3185085222)
+    music(cur, conn, "Best of Hip-Hop 2020",5171651864)
     test = createvisual()
 
 
