@@ -4,112 +4,93 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 import json
 import spotipy.util as util
+import pandas as pd
+from pandas.io import sql
+import sqlite3
+from sqlite3 import Error
 
 Spotify = spotipy.Spotify
 
 base_url = 'https://api.spotify.com'
-sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(client_id="eacd478467a4479ab95ce3266ecd883f", client_secret="39965161aaa34305b5258d45ee088908" ))
+spo = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(client_id="eacd478467a4479ab95ce3266ecd883f", client_secret="39965161aaa34305b5258d45ee088908" ))
 
-
-
-import sqlite3
-from sqlite3 import Error
-
-## write some functions to create batabase table and insert values
-def create_connection(db_file):
-    """ create a database connection to the SQLite database
-        specified by db_file
-    :param db_file: database file
-    :return: Connection object or None
-    """
+def create_conn(file):
     conn = None
     try:
-        conn = sqlite3.connect(db_file)
+        conn = sqlite3.connect(file)
         return conn
     except Error as e:
         print(e)
     return conn
 
 
-## Creating table function
-def create_table(conn, create_table_sql):
-    """ create a table from the create_table_sql statement
-    :param conn: Connection object
-    :param create_table_sql: a CREATE TABLE statement
-    :return:
-    """
+def table_db(conn, table):
     try:
         c = conn.cursor()
-        c.execute(create_table_sql)
+        c.execute(table)
     except Error as e:
         print(e)
-
-## function to insert values        
-def insert_values(conn, sql_statement, values):
-    """ create a table from the create_table_sql statement
-    :param conn: Connection object
-    :param create_table_sql: a CREATE TABLE statement
-    :return:
-    """
+       
+def table_values(conn, sql, vals):
     try:
         c = conn.cursor()
-        c.execute(sql_statement, values)
+        c.execute(sql, vals)
     except Error as e:
         pass
 
-def getting_playlist_data_to_database(playlist_id, playlist_owner, db, sql_table_statement, sql_value_statement):
+def transfer_to_database(playID, owner, db, table, sql_value):
     
-    ## Getting a bit cleaned up. 
-    results = sp.user_playlist(playlist_owner, playlist_id)
+    results = spo.user_playlist(owner, playID)
     results = results['tracks']['items']
     
-    
-    ## initializing some lists.
-    track_name = []
-    track_popularity = []
-    duration_ms = []
+    song_name = []
+    popularity = []
+    duration = []
     artist_name = []
-    track_id = []
+    trackID = []
     album_name = []
-    release_date = []
     
-    ## just going through the spotify object and retriving data. 
+   
     for result in results:
-        track_name.append(result['track']['name'])
-        duration_ms.append(result['track']['duration_ms'])
-        track_popularity.append(result['track']['popularity'])
+        song_name.append(result['track']['name'])
+        duration.append(result['track']['duration_ms'])
+        popularity.append(result['track']['popularity'])
         artist_name.append(result['track']['artists'][0]['name'])
-        track_id.append(result['track']['id'])
+        trackID.append(result['track']['id'])
         album_name.append(result['track']['album']['name'])
-        release_date.append(result['track']['album']['release_date'])
         
-    ## creating a connection with database
-    conn = create_connection(db)
-    create_table(conn, sql_table_statement)
+        
+    conn = create_conn(db)
+    table_db(conn, table)
     
-    ## looping through all the lists and inserting values. 
-    for i, n, p, d, at, alb, dt in zip(track_id, 
-                                   track_name, 
-                                   track_popularity, 
-                                   duration_ms, 
+    for iD, name, pop, dur, an, alb in zip(trackID, 
+                                   song_name, 
+                                   popularity, 
+                                   duration, 
                                    artist_name, 
                                    album_name, 
-                                   release_date):
-        values = (i, n, p, d, at, alb, dt)
-        insert_values(conn, sql_value_statement, values)
+                                   ):
+        values = (iD, name, pop, dur, an, alb)
+        table_values(conn, sql_value, values)
         conn.commit()
 
+#def Q(input_string, db = conn):
+    #return pd.read_sql(input_string, db)
 
+def main():
+    results = spo.search("TOP 100 Songs of 2020 (Best Hit Music Playlist)", limit = 1, type='playlist')
+    playID =  results['playlists']['items'][0]['id']
+    owner = results['playlists']['items'][0]['owner']['id']
+    db = 'dbspo.sqlite'
+    #conn = sqlite3.connect(db)
+    table = 'CREATE TABLE IF NOT EXISTS tracks(track_id CHAR(20) PRIMARY KEY, name TEXT, popularity INTEGER, duration_ms INTEGER, artist_name TEXT, album TEXT);'
+    sql_value = 'INSERT INTO tracks VALUES (?,?,?,?,?,?)'
+    transfer_to_database(playID, owner, db, table, sql_value)
 
+    #Q('SELECT COUNT(*) FROM tracks')
+   
 
-results = sp.search("TOP 100 Songs of 2020 (Best Hit Music Playlist)", limit = 1, type='playlist')
+    
 
-
-
-playlist_id =  results['playlists']['items'][0]['id']
-playlist_owner = results['playlists']['items'][0]['owner']['id']
-sqlite_db = '260.sqlite'
-sql_table = 'CREATE TABLE IF NOT EXISTS tracks(track_id CHAR(20) PRIMARY KEY, name TEXT, popularity INTEGER, duration_ms INTEGER, artist_name TEXT, album TEXT, release_date TEXT);'
-value_statement = 'INSERT INTO tracks VALUES (?,?,?,?,?,?,?)'
-
-getting_playlist_data_to_database(playlist_id, playlist_owner, sqlite_db, sql_table, value_statement)
+if __name__ == '__main__':
+    main()
