@@ -22,9 +22,7 @@ def music(cur, conn, Pname, playlist):
     'x-rapidapi-host': "deezerdevs-deezer.p.rapidapi.com"    
     }
     response = requests.get(url, headers = headers)    
-    print(response)
     cur.execute("CREATE TABLE IF NOT EXISTS DeezerData(id TEXT, artistName TEXT, ranking FLOAT, trackTimeMillis FLOAT)")
-    print(response.json())
     text = json.loads(response.text) 
     tracks = text.get('tracks')
     data = tracks.get('data')
@@ -42,11 +40,8 @@ def music(cur, conn, Pname, playlist):
                 #playlist = 
                 cur.execute('INSERT INTO DeezerData(id, artistName, ranking, trackTimeMillis) VALUES (?,?,?,?)', (id_num, name, rank, duration))
                 count += 1
-        print(id_num)
-        print(name)
-        print(rank)
-        print(duration)
     conn.commit()
+
 
 #Calculating the average time of song in playlist  
     cur.execute("SELECT trackTimeMillis from DeezerData")
@@ -55,14 +50,13 @@ def music(cur, conn, Pname, playlist):
     count = 0
     for row in cur:
         time = row[-1] #change row, index at a different
-        print(time) 
         total += time
         count += 1
     avg_milli = total/count
     avg = avg_milli / 60
     avg_min = round(avg, 2)
-    conn = sqlite3.connect('DeezerCalculations.sqlite')
-    cur = conn.cursor()
+    #conn = sqlite3.connect('DeezerCalculations.sqlite')
+    #cur = conn.cursor()
     #cur.execute('CREATE TABLE IF NOT EXISTS DeezerCalc( avg_min FLOAT)')
     #cur.execute('INSERT INTO DeezerCalc(avg_min) VALUES (?)', (avg_min))
     conn.commit()
@@ -70,13 +64,11 @@ def music(cur, conn, Pname, playlist):
     f = open("DeezerSummary.txt", 'w')
     f.write("Average duration for a song in the" + Pname + " is: " + str(avg_min) + " minutes" + "\n")
     f.close()
-    print(avg_min)
     
-cur,conn = setUpDatabase('testtest.sqlite')
-music(cur, conn,"Global 2020", 3185085222)
-music(cur, conn,"Hip-Hop Hits", 1677006641)
-music(cur, conn, "Rap Bangers", 1996494362)
-music(cur, conn, "Best of Hip-Hop 2020",5171651864)
+
+#music(cur, conn,"Hip-Hop Hits", 1677006641)
+#music(cur, conn, "Rap Bangers", 1996494362)
+#music(cur, conn, "Best of Hip-Hop 2020",5171651864)
 #music("Global 2020", 3185085222)
 #music("Hip-Hop Hits", 1677006641)
 #music("Rap Bangers", 1996494362)
@@ -84,20 +76,29 @@ music(cur, conn, "Best of Hip-Hop 2020",5171651864)
 
 
 def createvisual():
-    conn = sqlite3.connect("DeezerCalculations.sqlite")
+    conn = sqlite3.connect("testtest.sqlite")
     cur = conn.cursor()
-    avg_dur = []
-    cur.execute("SELECT * from DeezerCalc")
+    durations = []
+    cur.execute("SELECT trackTimeMillis from DeezerData")
     for row in cur: 
-        avg_dur.append(float(row[1]))
+        print(row[0])
+        durations.append(float(row[0]))
     plt.figure(1, figsize = (8.5,11))
-    x = ["Global Hits 2020", "Hip-Hop Playlist", "Rap Bangers", "Best of Rap 2020"]
-    y = [avg_dur[0], avg_dur[1], avg_dur[2], avg_dur[3], avg_dur[4], avg_dur[5]]
-    plt.bar(x,y, width = .8, align = "center", color = ["#1C3144", "#FF206E", "FBFF12"])
+    xbar = ["song1", "song2", "song3", "song4", "song5", "song6"]
+    ybar = [durations[0], durations[1], durations[2], durations[3], durations[4], durations[5]]
+    plt.bar(xbar,ybar, align = "center", color = "blue")
     plt.title("Average Length of Song by Popular")
     plt.xlabel("Artist")
     plt.ylabel("Duration (Min)")
-    plt.ylim(3.5,4)
+    plt.ylim(2,5)
     plt.savefig("DeezerBargraph.png")
     plt.show()
-createvisual()
+
+def main():
+    cur,conn = setUpDatabase('testtest.sqlite')
+    music(cur, conn,"Global 2020", 3185085222)
+    test = createvisual()
+
+
+if __name__ == '__main__':
+    main()
