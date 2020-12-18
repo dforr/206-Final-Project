@@ -50,32 +50,17 @@ def music(cur, conn, Pname, playlist):
     avg_length = 0
     count = 0
     for row in cur:
-        time = row[-1] #change row, index at a different
+        time = row[-1] 
         total += time
         count += 1
     avg_milli = total/count
     avg = avg_milli / 60
     avg_min = round(avg, 2)
-    #conn = sqlite3.connect('DeezerCalculations.sqlite')
-    #cur = conn.cursor()
-    #cur.execute('CREATE TABLE IF NOT EXISTS DeezerCalc( avg_min FLOAT)')
-    #cur.execute('INSERT INTO DeezerCalc(avg_min) VALUES (?)', (avg_min))
     conn.commit()
-    #counter = 0
     f = open("DeezerSummary.txt", 'w')
     f.write("Average duration for a song in the Global 2020 Hits Playlist is: " + str(avg_min) + " minutes" + "\n")
     f.close()
     
-
-#music(cur, conn,"Hip-Hop Hits", 1677006641)
-#music(cur, conn, "Rap Bangers", 1996494362)
-#music(cur, conn, "Best of Hip-Hop 2020",5171651864)
-#music("Global 2020", 3185085222)
-#music("Hip-Hop Hits", 1677006641)
-#music("Rap Bangers", 1996494362)
-#music("Best of Hip-Hop 2020", 5171651864)
-
-
 def createvisual():
     conn = sqlite3.connect("DeezerDB.sqlite")
     cur = conn.cursor()
