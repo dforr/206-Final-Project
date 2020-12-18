@@ -63,7 +63,7 @@ def music(cur, conn, Pname, playlist):
     conn.commit()
     #counter = 0
     f = open("DeezerSummary.txt", 'w')
-    f.write("Average duration for a song in the" + Pname + " is: " + str(avg_min) + " minutes" + "\n")
+    f.write("Average duration for a song in the Global 2020 Hits Playlist is: " + str(avg_min) + " minutes" + "\n")
     f.close()
     
 
@@ -92,7 +92,7 @@ def createvisual():
     plt.figure(1, figsize = (30,11))
     xbar = titles
     ybar = durations
-    plt.bar(xbar,ybar, width =.8, align = "center", color = "blue")
+    plt.bar(xbar,ybar, width =.8, align = "center", color = ["#f72585", '#480ca8', '#4cc9f0'])
     plt.title("Durations of Songs from Global 2020 Hits Playlist")
     plt.xlabel("Song Title")
     plt.ylabel("Duration (Min)")
